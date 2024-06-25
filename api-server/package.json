@@ -1,0 +1,16 @@
+{
+  "name": "api-server",
+  "author": "Guhaprasaanth Nandagopal",
+  "module": "server.mjs",
+  "type": "module",
+  "devDependencies": {
+    "@types/bun": "latest"
+  },
+  "peerDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.19.2"
+  }
+}
