@@ -1,33 +1,38 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import { useEffect, useState } from 'react'
 import './App.css'
 
+async function getTodos(){
+  const res = await fetch("http://localhost:8080/api/todos")
+  return await res.json();
+}
+
+async function addTodos(text){
+  const res = await fetch("http://localhost:8080/api/todos",{
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text })
+  });
+  
+  if(!res.ok) throw new Error("Failed to add a Todo");
+  return await res.json();
+}
+
 function App() {
-  const [count, setCount] = useState(0)
+  const [todos, setTodos] = useState([])
+
+  useEffect(() => {
+    getTodos().then(setTodos);
+  }, [])
+
+  todos && console.log("Todos:\t", todos);
 
   return (
     <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
+      <h1 className="">Todos</h1>
+      <br />
+      <ul>
+        {todos.map(({ id, text }) => <li key={id}>{text}</li>)}
+      </ul>
     </>
   )
 }

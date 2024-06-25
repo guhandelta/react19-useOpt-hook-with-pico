@@ -4,8 +4,8 @@ import cors from 'cors';
 const PORT = 8080;
 
 const todos = [
-    { id: 1, message: "Learn React 19" },
-    { id: 21, message: "Learn Vite" }
+    { id: 1, text: "Learn React 19" },
+    { id: 21, text: "Learn Vite" }
 ];
 
 const app = express();
