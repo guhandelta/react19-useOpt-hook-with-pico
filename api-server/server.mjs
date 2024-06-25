@@ -13,6 +13,10 @@ app.use(cors());
 app.use(express.json());
 
 app.get('/api/todos', (req,res)=>{
+    res.json(todos)
+})
+
+app.post('/api/todos', (req,res)=>{
 
     // A timeout to emulate a delay
     setTimeout(() => {
@@ -33,7 +37,6 @@ app.get('/api/todos', (req,res)=>{
     }, 3000);
 });
 
-app.post
 
 app.listen(PORT,() => {
     console.log(`Seerver is listening at: ${PORT}`);

@@ -6,7 +6,7 @@ async function getTodos(){
   return await res.json();
 }
 
-async function addTodos(text){
+async function addTodo(text){
   const res = await fetch("http://localhost:8080/api/todos",{
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -19,12 +19,17 @@ async function addTodos(text){
 
 function App() {
   const [todos, setTodos] = useState([])
+  const [newTodo, setNewTodo] = useState([])
 
-  useEffect(() => {
+  useEffect(() => { 
     getTodos().then(setTodos);
   }, [])
 
-  todos && console.log("Todos:\t", todos);
+  async function addNewTodo(){
+    await addTodo(newTodo);
+    setTodos(await getTodos());
+    setNewTodo("");
+  }
 
   return (
     <>
@@ -33,6 +38,17 @@ function App() {
       <ul>
         {todos.map(({ id, text }) => <li key={id}>{text}</li>)}
       </ul>
+      <div className="">
+        <input 
+          type="text" 
+          value={newTodo}
+          onChange={ e => setNewTodo(e.target.value) } 
+          onKeyUp={ e => {
+            if(e.key === "Enter") addNewTodo()
+            }
+          }
+        />
+      </div>
     </>
   )
 }
