@@ -72,7 +72,13 @@ function App() {
           onChange={ e => setNewTodo(e.target.value) } 
           onKeyUp={ e => {
               if(e.key === "Enter") 
-                // Calling addNewTodo as a part of startTransition()
+                /* Calling addNewTodo as a part of startTransition() 
+                1 Caveat here is, the startTransition should always be provided with a synchronous function, 
+                
+                Puzzle to solve:
+                - - > In this case, () => addNewTodo() is synchronous, but the addNewTodo() is an async fn(), and it's still used within the setTransition() < - - -
+                but it still works
+              */
                 startTransition(() => addNewTodo());
 
             }
