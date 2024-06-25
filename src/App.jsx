@@ -28,18 +28,23 @@ function App() {
     getTodos().then(setTodos);
   }, []);
 
-  // Invoke useOptimistic() and provide the todos, which will give optimistic Todos => It will share the updated state, to say this is what the to-dos will look like if the update suceeds
-  const [ optimisticTodos, setOptimisticTodos ] = useOptimistic(todos)
+  /* Invoke useOptimistic() and provide the todos, which will give optimistic Todos => It will share the updated state, to say this is what the to-dos will look like if the update suceeds
+  
+  useOptiomistic may also take in a second argunent of something like a reducer function, that takes in the state and actions{in this case the text is provided in place of that}, with\\ which is goes on to create the optimistic state, based on that. Which kinodf gives back simplifiedAddTodo */
+  const [ optimisticTodos, simplifiedAddTodo ] = useOptimistic(todos, (state, text) => {
+    return [ ...state, {
+      id: Math.random().toString(36).slice(2),
+      text
+    }]
+  })
 
   async function addNewTodo(){
-    // This is the function based approach, by providing it the current  state(the updated state canalso be provided here), to Set the Optimistic Todos with the current Todos, and create a new Todo with a random ID and the Todos with te new Todo
-    setOptimisticTodos((todos) => [
-      ...todos,
-      {
-        id: Math.random().toString(36).slice(2),
-        text: newTodo // Provide a value for the text property
-      }
-    ]);
+    /* This is the function based approach, by providing it the current  state(the updated state canalso be provided here), to Set the Optimistic Todos with the current Todos, and create a new Todo with a random ID and the Todos with te new Todo
+
+    This simplifiedAddTodo will be the wrapper around the reducer fn() provided to the useOptimistic(), taht takes in teh state and the action to create the new state based on that. */
+    simplifiedAddTodo(newTodo);
+
+
     /* 
     This would actually throw an error in the browser console, as this setOptimistic() was not called within an action or a transition, because only during a transition or an action, the useOptimistic() will know when the operation started and ended. React throws this error meaning to say that it is supposed to provide the optimistic data, only after the request was made to update the state and before the response arrives, but the error actually is to say that React doesn't know when the request was initiates and completed.
 
