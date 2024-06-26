@@ -9,6 +9,8 @@ lerna-debug.log*
 
 node_modules
 /api-server/node_modules
+/react19-useOpt-hook-with-pico/node_modules
+/zustand-vs-useOptimistic/node_modules
 dist
 dist-ssr
 *.local
