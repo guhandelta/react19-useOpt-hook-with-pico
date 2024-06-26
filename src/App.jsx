@@ -1,4 +1,4 @@
-import { useEffect, useState, useOptimistic, useTransition, useRef } from 'react'
+import { useEffect, useState, useOptimistic, useActionState, useRef } from 'react'
 import './App.css'
 
 async function getTodos(){
@@ -37,8 +37,13 @@ function App() {
     }]
   })
 
-  async function addNewTodo(formData){
+  async function addNewTodo(){
+    /* 
+      formData can be null when passed inot addNewTodo(), so use the formRef to instatiate FormDate on that ref, to generate form data using the FormData Object.
 
+      - - - *FormData object is a common way to create a bundle of data to send to the server using XMLHttpRequest or fetch. It replicates the functionality of the HTML form element. We can think of it as an array of arrays. There is one array for each element that we want to send to the server.* - - - 
+    */
+    const formData = new FormData(formRef.current);
     const newTodo = formData.get("text");
     /* This is the function based approach, by providing it the current  state(the updated state canalso be provided here), to Set the Optimistic Todos with the current Todos, and create a new Todo with a random ID and the Todos with te new Todo
 
@@ -57,6 +62,10 @@ function App() {
     }
   }
   
+  // useActionState is a Hook that allows you to update state based on the result of a form action.
+  // addNewTodoWithState => output of the fn()
+  const [ actionState, addNewTodoWithState, isPending ] = useActionState(addNewTodo);
+  
   return (
     <>
       <h1 className="">Todos</h1>
@@ -64,10 +73,11 @@ function App() {
       <ul>
         {optimisticTodos.map(({ id, text }) => <li key={id}>{text}</li>)}
       </ul>
-      <form ref={formRef} action={addNewTodo}>
+      <form ref={formRef} action={addNewTodoWithState}>
         <input 
           type="text" 
           name="text" 
+          disabled={isPending}
         />
       </form>
     </>
