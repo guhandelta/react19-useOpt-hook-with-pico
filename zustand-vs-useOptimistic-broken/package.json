@@ -1,8 +1,9 @@
 {
-  "name": "zustand-vs-useoptimistic",
+  "name": "react19-useopt-hook-with-pico",
   "private": true,
   "version": "0.0.0",
   "type": "module",
+  "author": "Guhaprasaanth Nandagopal",
   "scripts": {
     "dev": "vite",
     "build": "vite build",

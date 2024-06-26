@@ -1,6 +1,10 @@
-import { useOptimistic, useActionState, useRef } from 'react'
-import './App.css'
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { create } from 'zustand';
+
+
+/*
+  If the state management library already has featrues/functionalities to perform Optimistic on the state, then it would be wise/best to utilize teh state manager for Optimistic updates,instead of using useOptiistic() hooks, but if that is not the case the useOptimistic would be the best choice to perform Optimistic updates on the state when using basic Hooks.
+*/
+
 
 async function getTodos(){
   const res = await fetch("http://localhost:8080/api/todos")
@@ -18,79 +22,77 @@ async function addTodo(text){
   return await res.json();
 }
 
-function App() {
+const useTodos = create((set, get) => ({
+  // Initial State
+  todos: [],
+  // To disable or enable the Textfield
+  isPending: false,
 
-  // While installing React Query on a React 19 app, it may throw an unmet peer of react@19 error, saying React Query is not compatible with React 19. But attually it is fine, this error is due to the fact that the peer dependency in React Query has not been updated yet for React 19, but React Query will work with whatever version of React that is offered, 18 or 19.
+  // Get all teh todos by calling the getTodos()
+  getTodos: async () => {
+    const todos = await getTodos()
+    set({ todos });
+  },
+  postTodo: async (text) => {
+    // Cache the initial todos
+    const originalTodos = get().todos;
+    // Create the Optimistic update
+    set({
+      isPending: true,
+      // Update the todos with an optimistic array
+      todos: [
+        ...get().todos,
+        {
+          id: Math.random().toString(36).slice(2),
+          text
+        }
+      ]
+    });
 
-  // React Query on the other hand, has this Optimistic Updates configured within itself as sort of a pattern, but not actually build into React Query, with the useOptimistic hook, that feature can directly be implemented.
-
-  // refetch is added to refetch the data once a new Todo has been added
-  const { data: todos, refetch } = useQuery({
-    queryKey:["todos"],
-    queryFn: getTodos,
-    initialData: []
-  });
-  
-  
-  /* Invoke useOptimistic() and provide the todos, which will give optimistic Todos => It will share the updated state, to say this is what the to-dos will look like if the update suceeds
-  
-  useOptiomistic may also take in a second argunent of something like a reducer function, that takes in the state and actions{in this case the text is provided in place of that}, with\\ which is goes on to create the optimistic state, based on that. Which kinodf gives back simplifiedAddTodo */
-  const [ optimisticTodos, simplifiedAddTodo ] = useOptimistic(todos, (state, text) => {
-    return [ ...state, {
-      id: Math.random().toString(36).slice(2),
-      text
-    }]
-  })
-
-  // ref to reset the form data post submission
-  const formRef = useRef();
-
-  // Get the async version of the mutate fn(), as it will return a promise that can be awaited
-  const { mutateAsync: addTodoMutation } = useMutation({
-    mutationFn: addTodo,
-    onMutate: simplifiedAddTodo,
-    onSuccess: refetch
-  });
-
-  async function addNewTodo(){
-    /* 
-      formData can be null when passed inot addNewTodo(), so use the formRef to instatiate FormDate on that ref, to generate form data using the FormData Object.
-
-      - - - *FormData object is a common way to create a bundle of data to send to the server using XMLHttpRequest or fetch. It replicates the functionality of the HTML form element. We can think of it as an array of arrays. There is one array for each element that we want to send to the server.* - - - 
-    */
-    const formData = new FormData(formRef.current);
-    const newTodo = formData.get("text");
-
+    // Handle the API calls within a try-catch
     try {
-      await addTodoMutation(newTodo);
-      // refetch(); => not required as a refetch has already been configured for onSuccess in the Mutation Query
+      await addTodo(text);
+      set({ 
+        isPending: false,
+        todos: await getTodos()
+      })
     } catch (error) {
-      // Could even add a toast message
-      console.log(error);
-    } finally{
-      // the form data post submission, using the formRef
-      formRef.current.reset();
+      console.log("Error:\t", error);
+      set({ 
+        isPending: false,
+        todos: originalTodos
+      })
     }
   }
+}))
 
-  // useActionState is a Hook that allows you to update state based on the result of a form action.
-  // addNewTodoWithState => output of the fn()
-  const [ actionState, addNewTodoWithState, isPending ] = useActionState(addNewTodo);
+// To kick this off, call the getState() on useTodos, to get the current store and call the getTodos() to fetch all the todos for initial render. 
+// This is in place of useEffect(() => {}, [])
+useTodos.getState().getTodos();
+
+function App() {
+
+  const { isPending, todos, postTodo } = useTodos();
   
   return (
     <>
       <h1 className="">Todos</h1>
       <br />
       <ul>
-        {optimisticTodos.map(({ id, text }) => <li key={id}>{text}</li>)}
+        {todos.map(({ id, text }) => <li key={id}>{text}</li>)}
       </ul>
-      <form ref={formRef} action={addNewTodoWithState}>
+      <div>
         <input 
           type="text" 
-          name="text" 
           disabled={isPending}
+          onKeyUp={(e) => {
+            if(e.key === "Enter"){
+              postTodo(e.target.value);
+              e.target.value = "";
+            }
+          }}
         />
-      </form>
+      </div>
     </>
   )
 }
