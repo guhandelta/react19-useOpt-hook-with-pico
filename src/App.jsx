@@ -1,4 +1,4 @@
-import { useEffect, useState, useOptimistic, useTransition } from 'react'
+import { useEffect, useState, useOptimistic, useTransition, useRef } from 'react'
 import './App.css'
 
 async function getTodos(){
@@ -19,10 +19,9 @@ async function addTodo(text){
 
 function App() {
   const [todos, setTodos] = useState([]);
-  const [newTodo, setNewTodo] = useState([]);
-  const [ isPending, startTransition ] = useTransition();
 
-  console.log("IsPending:\t", isPending);
+  // ref to reset the form data post submission
+  const formRef = useRef();
 
   useEffect(() => { 
     getTodos().then(setTodos);
@@ -38,25 +37,14 @@ function App() {
     }]
   })
 
-  async function addNewTodo(){
+  async function addNewTodo(formData){
+
+    const newTodo = formData.get("text");
     /* This is the function based approach, by providing it the current  state(the updated state canalso be provided here), to Set the Optimistic Todos with the current Todos, and create a new Todo with a random ID and the Todos with te new Todo
 
     This simplifiedAddTodo will be the wrapper around the reducer fn() provided to the useOptimistic(), taht takes in teh state and the action to create the new state based on that. */
     simplifiedAddTodo(newTodo);
 
-
-    /* 
-    This would actually throw an error in the browser console, as this setOptimistic() was not called within an action or a transition, because only during a transition or an action, the useOptimistic() will know when the operation started and ended. React throws this error meaning to say that it is supposed to provide the optimistic data, only after the request was made to update the state and before the response arrives, but the error actually is to say that React doesn't know when the request was initiates and completed.
-
-    1) Wrapping the useOptimistic within a transition,
-      -> After the transition starts -> Provide the Optimistic State/Data.
-      -> When the transition completes -> Go back to the real data which is the output of the update.
-
-    2) using useOptimistic with a FormAction
-      -> Anything that is happends during the FormAction processing time is a part of the Optimistic Update
-      -> Get the Optimistic data in the beginning -and then- when the action resolves, the real data would be available
-
-    VM268401:1 An optimistic state update occurred outside a transition or action. To fix, move the update to an action, or wrap with startTransition. */
     try {
       await addTodo(newTodo);
       setTodos(await getTodos());
@@ -64,7 +52,8 @@ function App() {
       // Could even add a toast message
       console.log(error);
     } finally{
-      setNewTodo("");
+      // the form data post submission, using the formRef
+      formRef.current.reset();
     }
   }
   
@@ -75,26 +64,12 @@ function App() {
       <ul>
         {optimisticTodos.map(({ id, text }) => <li key={id}>{text}</li>)}
       </ul>
-      <div className="">
+      <form ref={formRef} action={addNewTodo}>
         <input 
           type="text" 
-          value={newTodo}
-          onChange={ e => setNewTodo(e.target.value) } 
-          onKeyUp={ e => {
-              if(e.key === "Enter") 
-                /* Calling addNewTodo as a part of startTransition() 
-                1 Caveat here is, the startTransition should always be provided with a synchronous function, 
-                
-                Puzzle to solve:
-                - - > In this case, () => addNewTodo() is synchronous, but the addNewTodo() is an async fn(), and it's still used within the setTransition() < - - -
-                but it still works
-              */
-                startTransition(() => addNewTodo());
-
-            }
-          }
+          name="text" 
         />
-      </div>
+      </form>
     </>
   )
 }
