@@ -57,10 +57,15 @@ function App() {
       -> Get the Optimistic data in the beginning -and then- when the action resolves, the real data would be available
 
     VM268401:1 An optimistic state update occurred outside a transition or action. To fix, move the update to an action, or wrap with startTransition. */
-
-    await addTodo(newTodo);
-    setTodos(await getTodos());
-    setNewTodo("");
+    try {
+      await addTodo(newTodo);
+      setTodos(await getTodos());
+    } catch (error) {
+      // Could even add a toast message
+      console.log(error);
+    } finally{
+      setNewTodo("");
+    }
   }
   
   return (
