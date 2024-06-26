@@ -1,6 +1,6 @@
 import { useOptimistic, useActionState, useRef } from 'react'
 import './App.css'
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 
 async function getTodos(){
   const res = await fetch("http://localhost:8080/api/todos")
@@ -30,10 +30,8 @@ function App() {
     queryFn: getTodos,
     initialData: []
   });
-
-  // ref to reset the form data post submission
-  const formRef = useRef();
-
+  
+  
   /* Invoke useOptimistic() and provide the todos, which will give optimistic Todos => It will share the updated state, to say this is what the to-dos will look like if the update suceeds
   
   useOptiomistic may also take in a second argunent of something like a reducer function, that takes in the state and actions{in this case the text is provided in place of that}, with\\ which is goes on to create the optimistic state, based on that. Which kinodf gives back simplifiedAddTodo */
@@ -44,6 +42,16 @@ function App() {
     }]
   })
 
+  // ref to reset the form data post submission
+  const formRef = useRef();
+
+  // Get the async version of the mutate fn(), as it will return a promise that can be awaited
+  const { mutateAsync: addTodoMutation } = useMutation({
+    mutationFn: addTodo,
+    onMutate: simplifiedAddTodo,
+    onSuccess: refetch
+  });
+
   async function addNewTodo(){
     /* 
       formData can be null when passed inot addNewTodo(), so use the formRef to instatiate FormDate on that ref, to generate form data using the FormData Object.
@@ -52,14 +60,10 @@ function App() {
     */
     const formData = new FormData(formRef.current);
     const newTodo = formData.get("text");
-    /* This is the function based approach, by providing it the current  state(the updated state canalso be provided here), to Set the Optimistic Todos with the current Todos, and create a new Todo with a random ID and the Todos with te new Todo
-
-    This simplifiedAddTodo will be the wrapper around the reducer fn() provided to the useOptimistic(), taht takes in teh state and the action to create the new state based on that. */
-    simplifiedAddTodo(newTodo);
 
     try {
-      await addTodo(newTodo);
-      refetch();
+      await addTodoMutation(newTodo);
+      // refetch(); => not required as a refetch has already been configured for onSuccess in the Mutation Query
     } catch (error) {
       // Could even add a toast message
       console.log(error);
